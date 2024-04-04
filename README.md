@@ -1,4 +1,3 @@
-```markdown
 # Game Lobby System
 
 This project implements a simple game lobby system using Flask and Socket.IO. It allows users to create, join, and leave lobbies. The system features real-time updates to all clients connected to a lobby when players join or leave and provides a basic UI for interaction.
