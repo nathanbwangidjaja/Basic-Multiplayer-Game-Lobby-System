@@ -24,21 +24,17 @@ This project implements a simple game lobby system using Flask and Socket.IO. It
 
 1. Clone the repository:
    ```
-   git clone <repository-url>
+   git clone https://github.com/nathanbwangidjaja/Basic-Multiplayer-Game-Lobby-System.git
    ```
 2. Navigate to the project directory:
    ```
-   cd game-lobby-system
+   cd Basic-Multiplayer-Game-Lobby-System
    ```
 3. Install the required Python packages:
    ```
    pip install Flask Flask-SocketIO
    ```
-4. Run the Flask application:
-   ```
-   flask run
-   ```
-   Or, if you prefer using `python` command:
+4. Run the Python command:
    ```
    python app.py
    ```
