@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Lobby System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        #lobbies div {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px; /* Adds spacing between each lobby div */
+        }
+
+        #lobbies div button {
+            margin-left: 10px; /* Adds spacing to the left of the button */
+            cursor: pointer; /* Changes cursor to pointer when hovering over the button */
+        }
+        #notifications {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            z-index: 1000;
+        }
+
+        .notification {
+            background-color: #f1f1f1;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLobbies();
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+            let selectedLobbyId = null;
+            document.querySelector('#lobbies').addEventListener('click', function(event) {
+                // Determine if the click is on a lobby or something within a lobby
+                let clickedElement = event.target;
+                let lobbyElement = clickedElement.closest('div[data-lobby-id]');
+
+                if (lobbyElement && !clickedElement.matches('button')) {
+                    // Click is within a lobby but not on a button
+                    selectedLobbyId = lobbyElement.getAttribute('data-lobby-id');
+                    // Visual feedback for selection
+                    document.querySelectorAll('#lobbies > div').forEach(div => {
+                        div.style.backgroundColor = ''; // Reset all to default
+                    });
+                    lobbyElement.style.backgroundColor = 'lightblue'; // Highlight the selected one
+                }
+                // If a button was clicked, this handler does nothing,
+                // allowing the button's own click event listener to handle the action.
+            });
+
+
+            function updateLobbies() {
+                fetch('/lobbies').then(response => response.json()).then(data => {
+                    const lobbiesDiv = document.querySelector('#lobbies');
+                    lobbiesDiv.innerHTML = ''; // Clear existing content
+
+                    Object.entries(data).forEach(([lobbyId, lobby]) => {
+                        const lobbyContainer = document.createElement('div');
+                        lobbyContainer.setAttribute('data-lobby-id', lobbyId);
+                        
+                        // Create a string that lists all player IDs or names
+                        const playerList = lobby.players.join(', ');  // Assuming lobby.players is an array of IDs or names
+                        
+                        // Update the innerHTML to include these names instead of the player count
+                        lobbyContainer.innerHTML = `Lobby: ${lobbyId} (Players: ${playerList})`;
+                        
+                        lobbyContainer.style.cursor = 'pointer'; // Optional: Improves UX by changing cursor on hover
+                        lobbiesDiv.appendChild(lobbyContainer);
+
+                        // If the lobby is full, add the "Start Game" button
+                        if (lobby.isFull) {
+                            const startButton = document.createElement('button');
+                            startButton.innerText = 'Start Game';
+                            startButton.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Prevent the click from being registered by the parent div's listener
+                                startGame(lobbyId);
+                            });
+                            lobbyContainer.appendChild(startButton);
+                        }
+                    });
+                }).catch(error => console.error('Error fetching lobbies:', error));
+            }
+
+            
+
+
+            socket.on('player_joined', data => {
+                alert(data.message); // Show an alert with the join message
+            });
+
+            socket.on('player_left', data => {
+                alert(data.message); // Show an alert with the leave message
+            });
+
+            socket.on('player_action', data => {
+                alert(data.message); // Or use a more sophisticated notification system
+            });
+
+            socket.on('player_action', data => {
+                const notificationContainer = document.getElementById('notifications');
+                const notification = document.createElement('div');
+                notification.classList.add('notification');
+                notification.innerText = data.message;
+
+                notificationContainer.appendChild(notification);
+
+                // Optionally, remove the notification after a few seconds
+                setTimeout(() => {
+                    notificationContainer.removeChild(notification);
+                }, 5000); // Adjust timing as needed
+            });
+
+
+
+            socket.on('connect', () => {
+                document.querySelector('#createLobby').onclick = () => {
+                    const playerId = document.querySelector('#playerId').value;
+                    // Emit 'create_lobby' with only playerId, removing lobbyDetails
+                    socket.emit('create_lobby', {'playerId': playerId});
+                };
+
+                document.querySelector('#joinLobby').onclick = () => {
+                    const playerId = document.querySelector('#playerId').value;
+                    if (selectedLobbyId) {
+                        socket.emit('join_lobby', {'lobbyId': selectedLobbyId, 'playerId': playerId});
+                    } else {
+                        alert("No lobby selected.");
+                    }
+                };
+
+                socket.on('lobby_full', data => {
+                    alert(data.message); // Notify the player if the lobby is full
+                });
+
+                document.querySelector('#leaveLobby').onclick = () => {
+                    const playerId = document.querySelector('#playerId').value;
+                    if (selectedLobbyId) {
+                        socket.emit('leave_lobby', {'lobbyId': selectedLobbyId, 'playerId': playerId});
+                    } else {
+                        alert("No lobby selected.");
+                    }
+                    updateLobbies();
+                };
+            });
+
+            socket.on('lobby_created', data => {
+                alert(`Lobby created with ID: ${data.lobbyId}`);
+                updateLobbies();
+            });
+
+            socket.on('lobby_update', data => {
+                const { lobbyId, players, isFull } = data;  // Assuming 'players' is now an array of IDs/names.
+                const lobbyContainer = document.querySelector(`div[data-lobby-id="${lobbyId}"]`);
+                if (lobbyContainer) {
+                    // Create a string that lists all player IDs or names.
+                    const playerList = players.join(', ');  // Turns the array of player IDs/names into a string.
+
+                    // Update the innerHTML to include these names instead of just the player count.
+                    lobbyContainer.innerHTML = `Lobby: ${lobbyId} (Players: ${playerList})`;
+
+                    // Search for an existing "Start Game" button within this lobby container.
+                    let startButton = lobbyContainer.querySelector('button');
+
+                    if (isFull && !startButton) {
+                        // If the lobby is full and there's no "Start Game" button, create and append it.
+                        startButton = document.createElement('button');
+                        startButton.innerText = 'Start Game';
+                        startButton.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Prevent the click event from bubbling up to the parent.
+                            startGame(lobbyId);
+                        });
+                        lobbyContainer.appendChild(startButton);
+                    } else if (!isFull && startButton) {
+                        // If the lobby is not full but has a "Start Game" button, remove it.
+                        startButton.remove();
+                    }
+                }
+            });
+
+            socket.on('game_started', data => {
+                const lobbyId = data.lobbyId;
+                alert(`Game in lobby ${lobbyId} has started.`);
+                updateLobbies();  // Update the lobby list to reflect the removal of the started game's lobby
+            });
+
+            function startGame(lobbyId) {
+                // Example of sending a request to the server to start the game
+                fetch('/startGame', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 'lobbyId': lobbyId }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message); // Notify the user
+                    updateLobbies(); // Refresh the lobbies list to reflect changes
+                })
+                .catch(error => console.error('Error starting game:', error));
+            }
+
+
+            updateLobbies(); // Initial update
+        });
+    </script>
+</head>
+<body>
+    <h1>Game Lobby System</h1>
+    <div id="lobbies">Lobbies will appear here.</div>
+    <div id="notifications"></div>
+    <input type="text" id="playerId" placeholder="Your Player ID">
+    <button id="createLobby">Create Lobby</button>
+    <button id="joinLobby">Join Lobby</button>
+    <button id="leaveLobby">Leave Lobby</button>
+</body>
+</html>
