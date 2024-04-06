@@ -39,25 +39,34 @@ This project implements a simple game lobby system using Flask and Socket.IO. It
    python app.py
    ```
 
-## Interacting with the System
+## Using the Game Lobby System
 
-### Creating a Lobby
-- Enter your player ID in the designated input field and click the "Create Lobby" button. A new lobby will be created, and you will automatically join as the first member.
+After successfully starting the server with the `python app.py` command, you'll be ready to access and interact with the game lobby system through a web browser. Here's how:
 
-### Joining a Lobby
-- Click on any lobby from the list of available lobbies to select it. Then, enter your player ID and click the "Join Lobby" button to join.
+### Accessing the Lobby System
 
-### Leaving a Lobby
-- To leave a lobby, simply click the "Leave Lobby" button while you are in a lobby.
+1. **Open your web browser**: Any modern web browser will do (e.g., Chrome, Firefox, Safari).
+2. **Navigate to the application**: Enter `http://127.0.0.1:5000/` in your browser's address bar and press `Enter`. This brings you to the main page of the game lobby system.
 
-### Starting a Game
-- If you are in a full lobby (4 players), a "Start Game" button will appear. Clicking this button will start the game and remove the lobby.
+### Interacting With the System
+
+**Creating a Lobby:**
+- **Enter Player ID**: Find the input field labeled for the player ID on the main page. Enter your unique player ID here.
+- **Create Lobby**: Click the "Create Lobby" button. A new lobby will be created with you as the first member. Other players can now join this lobby.
+
+**Joining a Lobby:**
+- **Select a Lobby**: View the list of available lobbies on the main page. Click on the lobby you wish to join.
+- **Join Lobby**: After selecting a lobby, enter your player ID (if you haven't already) and click the "Join Lobby" button to become a member of the selected lobby.
+
+**Leaving a Lobby:**
+- **Leave Lobby**: If you wish to leave the lobby for any reason, simply click the "Leave Lobby" button. You will be removed from the current lobby.
+
+**Starting a Game:**
+- **Full Lobby**: Once the lobby reaches full capacity (4 players), a "Start Game" button will appear.
+- **Start Game**: Clicking the "Start Game" button will initiate the game and remove the lobby, signaling the start of gameplay.
+
+**Lobby Deletion:**
+- **Automatic Deletion**: Lobbies will automatically be deleted if they reach below 1 player or after the game starts.
 
 ### Real-time Notifications
-- Real-time notifications appear at the bottom right of the screen, informing you when other players join or leave the lobby you are in.
-
-### API Endpoints and WebSocket Events
-- The system primarily interacts through WebSocket events for joining, leaving, and updating lobbies.
-- HTTP GET `/lobbies` is available to fetch the current list of lobbies and their statuses.
-
-For detailed interaction flows and additional functionalities, refer to the source code documentation within `app.py` and `index.html`.
+Keep an eye on the bottom right corner of the screen for real-time notifications. These notifications will inform you about players joining or leaving the lobby you are in, ensuring you're always up-to-date with the lobby status.
